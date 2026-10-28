@@ -1,0 +1,223 @@
+{
+  "name": "GOVPSI360-Minimal",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "govpsi360",
+        "responseMode": "responseNode"
+      },
+      "id": "1",
+      "name": "Receber Denuncia",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "descricao",
+              "value": "={{$json.body.descricao || 'Sem descrição'}}",
+              "type": "string"
+            },
+            {
+              "name": "area",
+              "value": "={{$json.body.area || 'Não Informada'}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "2",
+      "name": "Preparar Dados",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const protocolo = 'PSI-' + Date.now();\nconst descricao = $json.descricao || '';\n\nlet criticidade = 'Baixa';\n\nif (descricao.toLowerCase().includes('assedio')) {\n  criticidade = 'Alta';\n}\n\nreturn [{\n  json: {\n    ...$json,\n    protocolo,\n    criticidade\n  }\n}];"
+      },
+      "id": "3",
+      "name": "Classificar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{$json.criticidade}}",
+              "rightValue": "Alta",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "4",
+      "name": "Criticidade Alta",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1020,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "status",
+              "value": "ALERTA_COMITE",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "5",
+      "name": "Fluxo Critico",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [
+        1280,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "status",
+              "value": "TRIAGEM_PADRAO",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "6",
+      "name": "Fluxo Normal",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [
+        1280,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { protocolo: $json.protocolo, criticidade: $json.criticidade, status: $json.status } }}"
+      },
+      "id": "7",
+      "name": "Retornar Resposta",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1540,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Receber Denuncia": {
+      "main": [
+        [
+          {
+            "node": "Preparar Dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Dados": {
+      "main": [
+        [
+          {
+            "node": "Classificar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classificar": {
+      "main": [
+        [
+          {
+            "node": "Criticidade Alta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criticidade Alta": {
+      "main": [
+        [
+          {
+            "node": "Fluxo Critico",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fluxo Normal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fluxo Critico": {
+      "main": [
+        [
+          {
+            "node": "Retornar Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fluxo Normal": {
+      "main": [
+        [
+          {
+            "node": "Retornar Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "govpsi360-v1"
+}
