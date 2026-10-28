@@ -33,7 +33,7 @@ Inicialmente desenvolvido em ambiente local (`localhost` via Docker), o projeto 
 
 ## 📊 Painel Executivo (NR-1)
 
-![Dashboard GOVPSI360](./images/01-Dashboard-GOVPSI360.png)
+![Painel de controle GOVPSI360](./images/01-Dashboard-GOVPSI360.png)
 
 O painel fornece visão panorâmica e acionável para a gestão de pessoas e conformidade jurídica:
 
